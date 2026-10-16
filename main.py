@@ -3,7 +3,25 @@ import argparse
 import logging
 import torch
 from accelerate import Accelerator
-from src.config import (TransformerConfig, BERTConfig, LSTMConfig, KDConfig, LABEL2ID, ID2LABEL, NUM_LABELS, HF_CHECKPOINT_REPO_ID)
+
+from pathlib import Path
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.config import (
+    TransformerConfig,
+    BERTConfig,
+    LSTMConfig,
+    KDConfig,
+    LABEL2ID,
+    ID2LABEL,
+    NUM_LABELS,
+    HF_CHECKPOINT_REPO_ID,
+)
 from src.models import get_tokenizer
 from src.pipeline import run_train, run_evaluate, run_infer, run_distill
 from src.utils import set_seed, setup_logger
@@ -98,15 +116,20 @@ def main():
         help="Load a specific model weights checkpoint (.pt) file.",
     )
     parser.add_argument(
-        "--hf_repo_id", type=str, default=os.getenv("HF_CHECKPOINT_REPO_ID", HF_CHECKPOINT_REPO_ID),
+        "--hf_repo_id",
+        type=str,
+        default=os.getenv("HF_CHECKPOINT_REPO_ID", HF_CHECKPOINT_REPO_ID),
         help="Hugging Face model repo containing checkpoints/ (default: ducbao210/NER).",
     )
     parser.add_argument(
-        "--hf_token", type=str, default=os.getenv("HF_TOKEN"),
+        "--hf_token",
+        type=str,
+        default=os.getenv("HF_TOKEN"),
         help="Optional HF token; defaults to HF_TOKEN from .env.",
     )
     parser.add_argument(
-        "--upload_checkpoint", action="store_true",
+        "--upload_checkpoint",
+        action="store_true",
         help="Upload the trained checkpoint(s) to --hf_repo_id after training.",
     )
     parser.add_argument(
