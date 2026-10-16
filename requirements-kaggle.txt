@@ -1,0 +1,21 @@
+# Core Deep Learning & NLP
+transformers>=4.36.2
+accelerate>=1.15.0
+sentencepiece>=0.1.99
+huggingface_hub>=0.20.3
+peft>=0.8.2
+underthesea>=6.8.0
+
+# Metrics & Data Handling
+numpy>=2.0.0
+pandas>=2.2.0
+scikit-learn>=1.5.0
+
+# Visualization
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Utilities & Logging
+tqdm>=4.66.0
+tensorboard>=2.15.0
+python-dotenv>=1.0.0

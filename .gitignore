@@ -1,0 +1,29 @@
+# Virtual Environments
+.venv/
+.env
+# Python
+__pycache__/
+
+# IDE & Editors
+.vscode/
+.DS_Store
+
+# OS
+desktop.ini
+nul_
+Thumbs.db
+.env.local
+.env.*.local
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+.jupyter/
+
+# checkpoint
+*.pt
+*.pyc
+results/
+
+# dataset
+data/
