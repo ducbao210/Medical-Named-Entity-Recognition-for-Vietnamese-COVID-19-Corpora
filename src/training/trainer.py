@@ -92,11 +92,6 @@ class BaseTrainer:
             temporary_path = path + ".tmp"
             torch.save(state, temporary_path)
             os.replace(temporary_path, path)
-            for filename in os.listdir(self.save_dir):
-                if filename.endswith(".pt") and filename not in {
-                    name, f"{self.artifact_prefix}_best_model.pt"
-                }:
-                    os.remove(os.path.join(self.save_dir, filename))
             try:
                 self.logger.info(f"Saved checkpoint: {path}")
             except Exception as e:

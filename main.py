@@ -19,6 +19,7 @@ from src.config import (
     KDConfig,
     LABEL2ID,
     ID2LABEL,
+    LABEL_LIST,
     NUM_LABELS,
     HF_CHECKPOINT_REPO_ID,
 )
