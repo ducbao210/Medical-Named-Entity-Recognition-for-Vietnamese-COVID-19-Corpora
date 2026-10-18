@@ -405,8 +405,9 @@ class PhoBERTModel(nn.Module):
         self.num_labels = num_labels
         self.pad_token_id = pad_token_id
 
-        # Load pretrained encoder and train only the requested top transformer blocks.
-        self.bert = AutoModel.from_pretrained(model_name)
+        # Keep master weights in FP32; autocast handles lower-precision forward
+        # operations while GradScaler requires FP32 trainable gradients.
+        self.bert = AutoModel.from_pretrained(model_name).float()
         selected_layers = configure_encoder_trainability(self.bert, trainable_layers)
         self.trainable_encoder_layers = selected_layers
         self.dropout = nn.Dropout(0.1)
