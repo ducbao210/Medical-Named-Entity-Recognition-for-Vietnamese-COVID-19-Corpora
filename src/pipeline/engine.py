@@ -1,6 +1,7 @@
 import os
 import logging
 import torch
+import numpy as np
 import torch.optim as optim
 from underthesea import word_tokenize
 
@@ -29,7 +30,11 @@ def _load_checkpoint_file(path, map_location, *, allow_full_pickle=False):
     load_kwargs = {"map_location": map_location}
     if allow_full_pickle:
         load_kwargs["weights_only"] = False
-    return torch.load(path, **load_kwargs)
+        return torch.load(path, **load_kwargs)
+    # PyTorch 2.6 defaults to weights_only=True; existing checkpoints contain
+    # this NumPy scalar, so allow only that global rather than arbitrary pickle.
+    with torch.serialization.safe_globals([np._core.multiarray.scalar]):
+        return torch.load(path, weights_only=True, **load_kwargs)
 
 
 def _load_model_for_eval(model, chk_path, device, logger):
