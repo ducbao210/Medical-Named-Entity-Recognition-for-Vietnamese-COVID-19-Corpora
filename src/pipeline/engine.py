@@ -6,15 +6,36 @@ import torch.optim as optim
 from underthesea import word_tokenize
 
 from src.config import (
-    TRAIN_FILE, DEV_FILE, TEST_FILE, LABEL_LIST, LABEL2ID, ID2LABEL, NUM_LABELS,
-    LoRAConfig, get_model_dirs,
+    TRAIN_FILE,
+    DEV_FILE,
+    TEST_FILE,
+    LABEL_LIST,
+    LABEL2ID,
+    ID2LABEL,
+    NUM_LABELS,
+    LoRAConfig,
+    get_model_dirs,
 )
-from src.data import read_conll, VietnameseNERDataset, get_dataloader, encode_words_with_alignment, NERDataAugmentor
-from src.models import (get_tokenizer, get_model, PhoBERTModel, NERLoss)
+from src.data import (
+    read_conll,
+    VietnameseNERDataset,
+    get_dataloader,
+    encode_words_with_alignment,
+    NERDataAugmentor,
+)
+from src.models import get_tokenizer, get_model, PhoBERTModel, NERLoss
 from src.training import BaseTrainer, DistillationTrainer
-from src.utils import (setup_logger, compute_metrics, compute_entity_level_metrics,
-                       plot_loss_curve, plot_acc_curve, plot_confusion_matrix,
-                       plot_entity_distribution, save_metrics_csv, save_predictions)
+from src.utils import (
+    setup_logger,
+    compute_metrics,
+    compute_entity_level_metrics,
+    plot_loss_curve,
+    plot_acc_curve,
+    plot_confusion_matrix,
+    plot_entity_distribution,
+    save_metrics_csv,
+    save_predictions,
+)
 from src.checkpoints import ensure_checkpoint, upload_checkpoints, CheckpointError
 
 from torch.utils.data import DataLoader
@@ -31,9 +52,11 @@ def _load_checkpoint_file(path, map_location, *, allow_full_pickle=False):
     if allow_full_pickle:
         load_kwargs["weights_only"] = False
         return torch.load(path, **load_kwargs)
-    # PyTorch 2.6 defaults to weights_only=True; existing checkpoints contain
-    # this NumPy scalar, so allow only that global rather than arbitrary pickle.
-    with torch.serialization.safe_globals([np._core.multiarray.scalar]):
+    # PyTorch 2.6 defaults to weights_only=True; checkpoints include NumPy
+    # scalar metadata. Allow only its scalar/dtype classes, not arbitrary pickle.
+    with torch.serialization.safe_globals(
+        [np._core.multiarray.scalar, np.dtype, type(np.dtype(np.float64))]
+    ):
         return torch.load(path, weights_only=True, **load_kwargs)
 
 
@@ -288,10 +311,14 @@ def run_train(
         )
         if args.upload_checkpoint:
             if not args.hf_repo_id:
-                raise CheckpointError("--upload_checkpoint requires --hf_repo_id or HF_CHECKPOINT_REPO_ID")
+                raise CheckpointError(
+                    "--upload_checkpoint requires --hf_repo_id or HF_CHECKPOINT_REPO_ID"
+                )
             upload_checkpoints(
-                repo_id=args.hf_repo_id, model_name=current_model,
-                use_crf=args.use_crf, token=args.hf_token,
+                repo_id=args.hf_repo_id,
+                model_name=current_model,
+                use_crf=args.use_crf,
+                token=args.hf_token,
             )
 
         history = results.get("history")
@@ -305,7 +332,9 @@ def run_train(
             )
             plot_acc_curve(
                 history,
-                save_path=os.path.join(dirs["plots"], f"{dirs['prefix']}_acc_curve.png"),
+                save_path=os.path.join(
+                    dirs["plots"], f"{dirs['prefix']}_acc_curve.png"
+                ),
             )
 
 
@@ -367,13 +396,15 @@ def run_evaluate(
         dirs = get_model_dirs(current_model, args.use_crf)
 
         try:
-            chk_path = str(ensure_checkpoint(
-                current_model,
-                args.use_crf,
-                requested=args.checkpoint,
-                repo_id=args.hf_repo_id,
-                token=args.hf_token,
-            ))
+            chk_path = str(
+                ensure_checkpoint(
+                    current_model,
+                    args.use_crf,
+                    requested=args.checkpoint,
+                    repo_id=args.hf_repo_id,
+                    token=args.hf_token,
+                )
+            )
         except CheckpointError as exc:
             logger.error(f"Could not resolve checkpoint for {current_model}: {exc}")
             continue
@@ -385,7 +416,9 @@ def run_evaluate(
             logger.error(f"Failed to load checkpoint '{chk_path}': {e}")
             continue
 
-        pred_save_path = os.path.join(dirs["predictions"], f"{dirs['prefix']}_predictions.txt")
+        pred_save_path = os.path.join(
+            dirs["predictions"], f"{dirs['prefix']}_predictions.txt"
+        )
         token_report, entity_report, flat_preds, flat_labels, _, _ = run_evaluation(
             model,
             test_loader,
@@ -463,10 +496,15 @@ def run_infer(args, bert_config, tf_config, lstm_config, tokenizer, device, ID2L
         dirs = get_model_dirs(current_model, args.use_crf)
 
         try:
-            chk_path = str(ensure_checkpoint(
-                current_model, args.use_crf, requested=args.checkpoint,
-                repo_id=args.hf_repo_id, token=args.hf_token,
-            ))
+            chk_path = str(
+                ensure_checkpoint(
+                    current_model,
+                    args.use_crf,
+                    requested=args.checkpoint,
+                    repo_id=args.hf_repo_id,
+                    token=args.hf_token,
+                )
+            )
         except CheckpointError as exc:
             logger.error(f"Could not resolve checkpoint for {current_model}: {exc}")
             continue
@@ -564,10 +602,15 @@ def run_distill(
     teacher_dirs = get_model_dirs("phobert", args.use_crf)
 
     try:
-        chk_path = str(ensure_checkpoint(
-            "phobert", args.use_crf, requested=args.checkpoint,
-            repo_id=args.hf_repo_id, token=args.hf_token,
-        ))
+        chk_path = str(
+            ensure_checkpoint(
+                "phobert",
+                args.use_crf,
+                requested=args.checkpoint,
+                repo_id=args.hf_repo_id,
+                token=args.hf_token,
+            )
+        )
     except CheckpointError as exc:
         logger.error(f"Distillation requires a Teacher PhoBERT checkpoint: {exc}")
         return
@@ -642,8 +685,12 @@ def run_distill(
         )
         if args.upload_checkpoint:
             if not args.hf_repo_id:
-                raise CheckpointError("--upload_checkpoint requires --hf_repo_id or HF_CHECKPOINT_REPO_ID")
+                raise CheckpointError(
+                    "--upload_checkpoint requires --hf_repo_id or HF_CHECKPOINT_REPO_ID"
+                )
             upload_checkpoints(
-                repo_id=args.hf_repo_id, model_name=f"{current_model}_distilled",
-                use_crf=args.use_crf, token=args.hf_token,
+                repo_id=args.hf_repo_id,
+                model_name=f"{current_model}_distilled",
+                use_crf=args.use_crf,
+                token=args.hf_token,
             )

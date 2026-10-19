@@ -52,7 +52,7 @@ def main():
     tf_config = TransformerConfig()
     bert_config = BERTConfig()
     lstm_config = LSTMConfig()
-    kd_config = KDConfig()  # Add configuration for Distillation
+    kd_config = KDConfig()
 
     # Initialize Argument Parser
     parser = argparse.ArgumentParser(

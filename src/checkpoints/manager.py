@@ -1,4 +1,5 @@
 """Checkpoint naming, validation, upload and lazy download helpers."""
+
 from __future__ import annotations
 
 import json
@@ -30,12 +31,16 @@ def validate_hf_token(token: Optional[str] = None, require_write: bool = False) 
     """
     token = token or os.getenv("HF_TOKEN")
     if not token:
-        raise CheckpointError("HF_TOKEN is required for Hugging Face checkpoint access.")
+        raise CheckpointError(
+            "HF_TOKEN is required for Hugging Face checkpoint access."
+        )
     try:
         return HfApi(token=token).whoami()
     except Exception as exc:
         mode = "read/write" if require_write else "read"
-        raise CheckpointError(f"Hugging Face {mode} token validation failed: {exc}") from exc
+        raise CheckpointError(
+            f"Hugging Face {mode} token validation failed: {exc}"
+        ) from exc
 
 
 def _checkpoint_dir() -> Path:
@@ -44,7 +49,9 @@ def _checkpoint_dir() -> Path:
     return path
 
 
-def resolve_local_checkpoint(model_name: str, use_crf: bool, requested: Optional[str] = None) -> Optional[Path]:
+def resolve_local_checkpoint(
+    model_name: str, use_crf: bool, requested: Optional[str] = None
+) -> Optional[Path]:
     """Resolve an explicit path or the model-prefixed best/latest local file."""
     if requested:
         candidate = Path(requested)
@@ -70,7 +77,9 @@ def download_checkpoint(
     """Download one model checkpoint into the same local path used by training."""
     repo_id = repo_id or os.getenv("HF_CHECKPOINT_REPO_ID") or HF_CHECKPOINT_REPO_ID
     if not repo_id:
-        raise CheckpointError("Set HF_CHECKPOINT_REPO_ID or pass repo_id to download checkpoints.")
+        raise CheckpointError(
+            "Set HF_CHECKPOINT_REPO_ID or pass repo_id to download checkpoints."
+        )
     validate_hf_token(token)
     best_name, latest_name = checkpoint_filenames(model_name, use_crf)
     target_name = filename or best_name
@@ -114,14 +123,12 @@ def ensure_checkpoint(
     local = resolve_local_checkpoint(model_name, use_crf, requested)
     if local:
         return local
-    if requested and not (repo_id or os.getenv("HF_CHECKPOINT_REPO_ID") or HF_CHECKPOINT_REPO_ID):
-        raise CheckpointError(f"Checkpoint does not exist: {requested}")
-    requested_name = Path(requested).name if requested else None
-    allowed = set(checkpoint_filenames(model_name, use_crf))
-    filename = requested_name if requested_name in allowed else None
-    return download_checkpoint(
-        model_name, use_crf, repo_id=repo_id, token=token, filename=filename
-    )
+    if requested:
+        raise CheckpointError(
+            f"Requested checkpoint does not exist: {requested}. "
+            "Run distillation/training first or provide an existing checkpoint path."
+        )
+    return download_checkpoint(model_name, use_crf, repo_id=repo_id, token=token)
 
 
 def upload_checkpoints(
@@ -138,13 +145,16 @@ def upload_checkpoints(
     api = HfApi(token=token)
     api.create_repo(repo_id=repo_id, repo_type="model", private=private, exist_ok=True)
     directory = _checkpoint_dir()
-    names = checkpoint_filenames(model_name, use_crf) if model_name else tuple(
-        sorted(p.name for p in directory.glob("*.pt"))
+    names = (
+        checkpoint_filenames(model_name, use_crf)
+        if model_name
+        else tuple(sorted(p.name for p in directory.glob("*.pt")))
     )
     missing = [name for name in names if not (directory / name).is_file()]
     if missing:
         raise CheckpointError(
-            "Upload requires both best and latest checkpoints; missing: " + ", ".join(missing)
+            "Upload requires both best and latest checkpoints; missing: "
+            + ", ".join(missing)
         )
     uploaded: list[str] = []
     for name in names:
