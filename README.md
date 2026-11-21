@@ -170,31 +170,31 @@ Inference highlights non-`O` predictions in the terminal. The current CLI accept
 
 ## Recorded results
 
-The following scores are read from the `results/metrics/*_token_metrics.csv` files present in this workspace. They are **token-level** test metrics, not span/entity F1. `Macro F1` averages across the reported labels, while `Weighted F1` weights each label by its support. Bold marks the best recorded value in each column.
+Token-level scores are read from the `results/metrics/*_token_metrics.csv` files. Entity precision, recall, and F1 are strict IOB2 span metrics calculated from the corresponding saved prediction files using the evaluation code's `seqeval` settings. `Macro F1` averages across the reported labels; `Weighted F1` weights each label by its support. Bold marks the best recorded value in each column.
 
-| Model | CRF | Token accuracy | Macro F1 | Weighted F1 |
-|---|:---:|---:|---:|---:|
-| LSTM | No | 95.12% | 74.47% | 94.96% |
-| LSTM | Yes | 95.33% | 74.61% | 95.16% |
-| BiLSTM | No | 95.91% | 70.52% | 95.70% |
-| BiLSTM | Yes | 96.30% | 75.57% | 96.19% |
-| Transformer (scratch) | No | 94.81% | 74.01% | 94.70% |
-| Transformer (scratch) | Yes | 95.13% | 77.74% | 95.01% |
-| PhoBERT | No | 98.12% | 86.25% | 98.10% |
-| PhoBERT | Yes | 98.15% | 87.42% | 98.13% |
-| PhoBERT + LoRA | No | 98.21% | 87.68% | 98.19% |
-| **PhoBERT + LoRA** | **Yes** | **98.29%** | **88.54%** | **98.26%** |
-| XLM-RoBERTa | No | 97.35% | 82.76% | 97.31% |
-| XLM-RoBERTa | Yes | 97.46% | 77.70% | 97.42% |
-| ViDeBERTa | No | 87.32% | 47.29% | 86.28% |
-| ViDeBERTa | Yes | 87.38% | 47.61% | 86.43% |
+| Model | CRF | Token accuracy | Macro F1 | Weighted F1 | Entity precision | Entity recall | Entity F1 |
+|---|:---:|---:|---:|---:|---:|---:|---:|
+| LSTM | No | 95.12% | 74.47% | 94.96% | 88.48% | 84.86% | 86.63% |
+| LSTM | Yes | 95.33% | 74.61% | 95.16% | 89.37% | 85.92% | 87.61% |
+| BiLSTM | No | 95.91% | 70.52% | 95.70% | 91.23% | 86.37% | 88.74% |
+| BiLSTM | Yes | 96.30% | 75.57% | 96.19% | 91.02% | 88.90% | 89.95% |
+| Transformer (scratch) | No | 94.81% | 74.01% | 94.70% | 83.62% | 83.41% | 83.51% |
+| Transformer (scratch) | Yes | 95.13% | 77.74% | 95.01% | 85.66% | 84.66% | 85.16% |
+| PhoBERT | No | 98.12% | 86.25% | 98.10% | 94.53% | 94.61% | 94.57% |
+| PhoBERT | Yes | 98.15% | 87.42% | 98.13% | 94.34% | 94.94% | 94.64% |
+| PhoBERT + LoRA | No | 98.21% | 87.68% | 98.19% | 94.45% | 95.22% | 94.84% |
+| **PhoBERT + LoRA** | **Yes** | **98.29%** | **88.54%** | **98.26%** | **95.67%** | **95.35%** | **95.51%** |
+| XLM-RoBERTa | No | 97.35% | 82.76% | 97.31% | 90.71% | 92.06% | 91.38% |
+| XLM-RoBERTa | Yes | 97.46% | 77.70% | 97.42% | 91.08% | 92.65% | 91.86% |
+| ViDeBERTa | No | 87.32% | 47.29% | 86.28% | 68.68% | 59.24% | 63.61% |
+| ViDeBERTa | Yes | 87.38% | 47.61% | 86.43% | 70.72% | 60.82% | 65.40% |
 
 ### Notes on the results
 
 - PhoBERT with LoRA and CRF has the strongest recorded token-level scores in these CSVs. CRF improves token accuracy and weighted F1 slightly for most model pairs, though XLM-RoBERTa's macro F1 is higher without CRF in this snapshot.
 - The macro scores are substantially below the weighted scores for several models. This gap, together with the large `O` support in the reports, indicates that aggregate accuracy/weighted F1 can hide weaker performance on less frequent entity tags. Review per-entity BIO F1 and support before choosing a model.
-- These CSVs are token reports. The repository's evaluation code also computes span-based entity F1, but the CSVs do not store it. The files also do not identify their checkpoint provenance; in particular, the notebooks evaluate a distilled BiLSTM using the same generic `bilstm` metric filenames. Treat the BiLSTM rows as recorded artifacts, not as a clean baseline-versus-distilled comparison.
-- The table is a snapshot of artifacts already in the repository, not the result of a fresh training/evaluation run. Re-run evaluation to regenerate metrics for a specific checkpoint.
+- The saved artifacts do not identify their checkpoint provenance; in particular, the notebooks evaluate a distilled BiLSTM using the same generic `bilstm` metric filenames. Treat the BiLSTM rows as recorded artifacts, not as a clean baseline-versus-distilled comparison.
+- This table is a snapshot calculated from artifacts already in the repository, not the result of a fresh training/evaluation run. Re-run evaluation to regenerate metrics for a specific checkpoint.
 
 ## Citation
 
